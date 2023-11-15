@@ -4,13 +4,10 @@ import java.lang.Math;
 
 public class Vector2f {
 
-	public static final Vector2f origin = new Vector2f(0, 0);
-
 	protected float x;
 	protected float y;
 	
 	public Vector2f(float x, float y) {
-		System.out.println("The zero vector is: " + origin);
 		this.x = x;
 		this.y = y;
 	}
@@ -22,6 +19,9 @@ public class Vector2f {
 	}
 	public String toString() {
 		return "<%.1f, %.1f>".formatted(x, y);	
+	}
+	public static final Vector2f zero() {
+		return new Vector2f(0, 0);
 	}
 	public float getX() {
 		return x;

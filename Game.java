@@ -39,7 +39,7 @@ class Canvas extends JPanel {
 	private Point current;
 	private Vector2f dr;
 	private Vector2f prevVec;
-	private VectorShape drawnShape = new VectorLine(Vector2f.origin, Vector2f.origin);
+	private VectorShape drawnShape = new VectorLine(Vector2f.zero(), Vector2f.zero());
 	private VectorShape selectedShape;
 	private String drawMode = "line";
 	private char keyChar = ' ';
@@ -47,7 +47,7 @@ class Canvas extends JPanel {
 	private ArrayList<VectorShape> drawnShapes = new ArrayList<VectorShape>();
 	private Color defaultColor = Color.black;
 	private int defaultLineWidth = 2;
-	private ImageShape mario = new ImageShape("sprites/mario.png", new Vector2f(20, 30), Vector2f.origin);
+	private ImageShape mario = new ImageShape("sprites/mario.png", new Vector2f(20, 30), Vector2f.zero());
 
 	Canvas () {
 		ClickListener clickListener = new ClickListener();
@@ -71,7 +71,6 @@ class Canvas extends JPanel {
 	        g.drawString("Pressed Key: " + keyChar, 10, 10);
 		g.drawString("Current Mode: " + drawMode, 10, 25);
 		g.drawString("Line Width: " + defaultLineWidth, 10, 40);
-		System.out.println(mario.getTail());
 		drawnShapes.add(mario);
 		if (drawnShape != null) drawnShape.draw(g, defaultLineWidth, defaultColor);
 		for (VectorShape shape : drawnShapes) {
@@ -81,7 +80,7 @@ class Canvas extends JPanel {
 	}
 	private class ClickListener extends MouseAdapter {
 		public void mousePressed(MouseEvent event) { // procedure for when a mouse click is registered
-			dr = Vector2f.origin;
+			dr = Vector2f.zero();
 			prev = event.getPoint();
 			prevVec = new Vector2f((float) prev.getX(),(float)  prev.getY());
 			for (VectorShape shape : drawnShapes) {
@@ -132,31 +131,6 @@ class Canvas extends JPanel {
 		}
 		public void keyReleased(KeyEvent event) {
 
-		}
-		public void keyCharInputOperation(char keyChar) {
-			switch (keyChar) {
-			case ('l'): drawMode = "line";
-				break;
-			case ('r'): drawMode = "rectangle";
-				break;
-			case ('c'): drawMode = "circle";
-				break;
-			case ('f'):
-				drawMode = "falling";
-				for (VectorShape shape : drawnShapes) {
-					if (shape != null) shape.translate(10, 10);
-				}
-				break;
-			case ('d'): drawMode = "drag";
-				break;
-			case ('q'): 
-				drawMode = "reset";
-				drawnShapes.clear();
-				drawnShape = null;
-				break;
-			default: drawMode = "line";
-			}
-			repaint();
 		}
 		public void keyCodeInputOperation(int keyCode) {
 			switch (keyCode) {

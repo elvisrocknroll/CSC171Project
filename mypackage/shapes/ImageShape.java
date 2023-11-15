@@ -17,8 +17,6 @@ public class ImageShape extends VectorShape {
 	private BufferedImage img = null;
 
         public ImageShape(String path, Vector2f vec, Vector2f tail) {
-		System.out.println("Initial tail: " + this.tail);
-		System.out.println("Origin in Img: " + Vector2f.origin);
                 this.vec = vec; 
                 this.tail = tail;
 		this.path = path;
@@ -32,6 +30,9 @@ public class ImageShape extends VectorShape {
 	}
 	public void setPath(String newPath) {
 		this.path = newPath;
+		try {
+			img = ImageIO.read(new File(path));
+		} catch (IOException e) {}
 	}
 	public float getArea() {
 		return height * width;

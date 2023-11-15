@@ -6,17 +6,16 @@ import java.awt.Graphics;
 import java.awt.Color;
 import javax.swing.JComponent;
 import java.util.ArrayList;
+import java.lang.Short;
 
 public abstract class VectorShape extends JComponent{
 
-	protected Vector2f tail = Vector2f.origin;
+	protected Vector2f tail = Vector2f.zero();
 	protected Vector2f vec;
 	protected Color color = Color.black;
 	protected int stroke = 2;
-	protected Vector2f velocity = Vector2f.origin;
-	protected Vector2f acceleration = Vector2f.origin;
-	//protected Vector2f velocity = new Vector2f(0, 0);
-	//protected Vector2f acceleration = new Vector2f(0, 0);
+	protected Vector2f velocity = Vector2f.zero();
+	protected Vector2f acceleration = Vector2f.zero();
 	protected float mass = 10;
 	protected float x1;
 	protected float x2;
@@ -27,11 +26,45 @@ public abstract class VectorShape extends JComponent{
         protected Vector2f drawnVec;
         protected float width;
         protected float height;
-	protected Vector2f UL = Vector2f.origin;
-	protected Vector2f UR = Vector2f.origin;
-	protected Vector2f DL = Vector2f.origin;
-	protected Vector2f DR = Vector2f.origin;
-	protected Vector2f[] corners = {UL, UR, DL, DR};
+	protected Vector2f ULU = Vector2f.zero();
+	protected Vector2f URU = Vector2f.zero();
+	protected Vector2f ULD = Vector2f.zero();
+	protected Vector2f URD = Vector2f.zero();
+	protected Vector2f DLU = Vector2f.zero();
+	protected Vector2f DRU = Vector2f.zero();
+	protected Vector2f DLD = Vector2f.zero();
+	protected Vector2f DRD = Vector2f.zero();
+	protected Vector2f[] cmesh = {ULU, URU, ULD, URD, DLU, DRU, DLD, DRD};
+	protected byte meshSpacing = 5;
+	
+	private ArrayList<Short> UCollisions = new ArrayList<>() {{
+		this.add(Short.parseShort("10000000", 2)); // 10000000
+		this.add(Short.parseShort("11000000", 2)); // 11000000
+		this.add(Short.parseShort("01000000", 2)); // 01000000
+		this.add(Short.parseShort("11110000", 2));
+		this.add(Short.parseShort("11111100", 2));
+	}};
+	private ArrayList<Short> DCollisions = new ArrayList<>() {{
+		this.add(Short.parseShort("00000010", 2)); // 00000010
+		this.add(Short.parseShort("00000011", 2)); // 00000011
+		this.add(Short.parseShort("00000001", 2)); // 00000001
+		this.add(Short.parseShort("00001111", 2));
+		this.add(Short.parseShort("00111111", 2));
+	}};
+	private ArrayList<Short> LCollisions = new ArrayList<>() {{
+		this.add(Short.parseShort("10100000", 2)); // 10100000
+		this.add(Short.parseShort("10101000", 2)); // 10101000
+		this.add(Short.parseShort("10101010", 2)); // 10101010
+		this.add(Short.parseShort("00101010", 2)); // 00101010
+		this.add(Short.parseShort("00001010", 2)); // 00001010
+	}};
+	private ArrayList<Short> RCollisions = new ArrayList<>() {{
+		this.add(Short.parseShort("01010000", 2)); // 01010000
+		this.add(Short.parseShort("01010100", 2)); // 01010100
+		this.add(Short.parseShort("01010101", 2)); // 01010101
+		this.add(Short.parseShort("00010101", 2)); // 00010101
+		this.add(Short.parseShort("00000101", 2)); // 00000101
+	}};
 
 	public abstract float getArea();
 	public abstract void draw(Graphics g);
@@ -54,15 +87,26 @@ public abstract class VectorShape extends JComponent{
                 y2 = drawnTail.add(drawnVec).getY();
                 height = drawnVec.getY();
                 width = drawnVec.getX();
-		UL.set(x1, y1);
-		UR.set(x2, y1);
-		DL.set(x1, y2);
-		DR.set(x2, y2);
+		ULU.set(x1, y1);
+		URU.set(x2, y1);
+		ULD.set(x1, y1 + meshSpacing);
+		URD.set(x2, y1 + meshSpacing);
+		DLU.set(x1, y2 - meshSpacing);
+		DRU.set(x2, y2 - meshSpacing);
+		DLD.set(x1, y2);
+		DRD.set(x2, y2);
+        }
+        public boolean barelyContains(Vector2f point) {
+                float x = point.getX();
+                float y = point.getY();
+                if (x >= (float) x1 && x <= (float) x2 && (float) y >= y1 && y <= y2)
+                        return true;
+                return false;
         }
         public boolean contains(Vector2f point) {
                 float x = point.getX();
                 float y = point.getY();
-                if (x >= (float) x1 && x <= (float) x2 && (float) y >= y1 && y <= y2)
+                if (x > (float) x1 && x < (float) x2 && (float) y > y1 && y < y2)
                         return true;
                 return false;
         }
@@ -135,6 +179,12 @@ public abstract class VectorShape extends JComponent{
 		tail.set(tail.getX() + x, tail.getY() + y);
 		calculatePosition();
 	}
+	public void translateBuffer(Vector2f shift) {
+		tail.set(tail.getX() + shift.getX(), tail.getY() + shift.getY());
+	}
+	public void translateBuffer(float x, float y) {
+		tail.set(tail.getX() + x, tail.getY() + y);
+	}
 	public Vector2f getAcceleration() {
 		return acceleration;
 	}
@@ -147,32 +197,102 @@ public abstract class VectorShape extends JComponent{
 	public void accelerate(float ax, float ay) {
 		acceleration.set(ax, ay);
 	}
+	public void addAcceleration(Vector2f a) {
+		acceleration = acceleration.add(a);
+	}
+	public void addAcceleration(float ax, float ay) {
+		acceleration = acceleration.add(ax, ay);
+	}
 	public void setVelocity(Vector2f v) {
 		velocity = v;
 	}
 	public void setVelocity(float vx, float vy) {
 		velocity.set(vx, vy);
 	}
+	public void addVelocity(Vector2f v) {
+		velocity = velocity.add(v);
+	}
+	public void addVelocity(float vx, float vy) {
+		velocity = velocity.add(vx, vy);
+	}
 	public void calculateMotion(float t) {
 		float dt = (float) 0.001*t;
-		//velocity = velocity.add(acceleration.scalarMult(dt));
-		tail = tail.add(velocity.scalarMult(dt));
-		calculatePosition();
+		addVelocity(acceleration.scalarMult(dt));
+		translate(velocity.scalarMult(dt));
 	}
 	public void zeroAll() {
-		velocity = Vector2f.origin;
-		acceleration = Vector2f.origin;
-		setTail(Vector2f.origin);
+		velocity = Vector2f.zero();
+		acceleration = Vector2f.zero();
+		setTail(Vector2f.zero());
 	}
 	public static void force(Vector2f vec) {
 		
 	}
 // collisions
+	public short detectBarelyCollidedPoints(VectorShape other) {
+		String collidedMesh = "";
+		for (int i = 0; i < 8; i++) {
+			if (other.barelyContains((Vector2f) cmesh[i])) {
+				collidedMesh += "1";
+			} else { 
+				collidedMesh += "0"; 
+			}
+		}
+		return Short.parseShort(collidedMesh, 2);
+	}
+	public short detectCollidedPoints(VectorShape other) {
+		String collidedMesh = "";
+		for (int i = 0; i < 8; i++) {
+			if (other.contains((Vector2f) cmesh[i])) {
+				collidedMesh += "1";
+			} else { 
+				collidedMesh += "0"; 
+			}
+		}
+		return Short.parseShort(collidedMesh, 2);
+	}
 	public boolean detectCollision(VectorShape other) {
-		for (Vector2f corner : corners) {
-			if (other.contains((Vector2f) corner)) return true; 
+		for (Vector2f point : cmesh) {
+			if (other.contains((Vector2f) point)) {
+				System.out.println("Collision");
+				return true; 
+			}	
 		}
 		return false;
+	}
+	public void handleCollisionInelastic(VectorShape other) {
+		handleXCollisionInelastic(other);
+		handleYCollisionInelastic(other);
+	}
+	public void handleXCollisionInelastic(VectorShape other) {
+		short collidedPoints = detectCollidedPoints(other);
+		if (collidedPoints != 0) {
+			if (RCollisions.contains(collidedPoints)) {
+				translate(-1, 0);
+				handleXCollisionInelastic(other);
+				velocity.setX(0);
+			}
+			if (LCollisions.contains(collidedPoints)) {
+				translate(1, 0);
+				handleXCollisionInelastic(other);
+				velocity.setX(0);
+			}
+		}
+	}
+	public void handleYCollisionInelastic(VectorShape other) {
+		short collidedPoints = detectCollidedPoints(other);
+		if (collidedPoints != 0) {
+			if (DCollisions.contains(collidedPoints)) {
+				translate(0, -1);
+				handleYCollisionInelastic(other);
+				velocity.setY(0);
+			}
+			if (UCollisions.contains(collidedPoints)) {
+				translate(0, 1);
+				handleYCollisionInelastic(other);
+				velocity.setY(0);
+			}
+		}
 	}
 /*
         public char detectCollision(VectorShape other) {
