@@ -11,7 +11,7 @@ import java.lang.Short;
 public abstract class VectorShape extends JComponent{
 
 	protected Vector2f tail = Vector2f.zero();
-	protected Vector2f vec;
+	protected Vector2f vec = Vector2f.zero();
 	protected Color color = Color.black;
 	protected int stroke = 2;
 	protected Vector2f velocity = Vector2f.zero();
@@ -24,6 +24,7 @@ public abstract class VectorShape extends JComponent{
         protected Vector2f head;
         protected Vector2f drawnTail;
         protected Vector2f drawnVec;
+	protected Vector2f foot = new Vector2f(0, 0);
         protected float width;
         protected float height;
 	protected Vector2f ULU = Vector2f.zero();
@@ -35,7 +36,10 @@ public abstract class VectorShape extends JComponent{
 	protected Vector2f DLD = Vector2f.zero();
 	protected Vector2f DRD = Vector2f.zero();
 	protected Vector2f[] cmesh = {ULU, URU, ULD, URD, DLU, DRU, DLD, DRD};
-	protected byte meshSpacing = 5;
+	protected byte meshSpacing = 10;
+	protected boolean grounded;
+	protected int bounceCount = 0;
+	protected int stunTimer = 0;
 	
 	private ArrayList<Short> UCollisions = new ArrayList<>() {{
 		this.add(Short.parseShort("10000000", 2)); // 10000000
@@ -85,7 +89,8 @@ public abstract class VectorShape extends JComponent{
                 x2 = drawnTail.add(drawnVec).getX();
                 y1 = drawnTail.getY();
                 y2 = drawnTail.add(drawnVec).getY();
-                height = drawnVec.getY();
+                foot.set((float) ((x1 + x2) / 2), y2);
+		height = drawnVec.getY();
                 width = drawnVec.getX();
 		ULU.set(x1, y1);
 		URU.set(x2, y1);
@@ -111,10 +116,24 @@ public abstract class VectorShape extends JComponent{
                 return false;
         }
 	public Vector2f getTail() {
-		return tail;
+		return drawnTail;
+	}
+	public Vector2f getVec() {
+		return drawnVec;
+	}
+	public Vector2f getFoot() {
+		return foot;
+	}
+	public void setVec(Vector2f newVec) {
+		vec.set(newVec);
+		calculatePosition();
 	}
 	public void setTail(Vector2f newTail) {
-		tail = newTail;
+		tail.set(newTail);
+		calculatePosition();
+	}
+	public void setTail(float x, float y) {
+		tail = new Vector2f(x, y);
 		calculatePosition();
 	}
 	public Color getColor() {
@@ -192,7 +211,7 @@ public abstract class VectorShape extends JComponent{
 		return velocity;
 	}
 	public void accelerate(Vector2f a) {
-		acceleration = a;
+		acceleration.set(a);
 	}
 	public void accelerate(float ax, float ay) {
 		acceleration.set(ax, ay);
@@ -204,7 +223,7 @@ public abstract class VectorShape extends JComponent{
 		acceleration = acceleration.add(ax, ay);
 	}
 	public void setVelocity(Vector2f v) {
-		velocity = v;
+		velocity.set(v);
 	}
 	public void setVelocity(float vx, float vy) {
 		velocity.set(vx, vy);
@@ -216,9 +235,16 @@ public abstract class VectorShape extends JComponent{
 		velocity = velocity.add(vx, vy);
 	}
 	public void calculateMotion(float t) {
+		if (pathfinding) pathfind();
 		float dt = (float) 0.001*t;
 		addVelocity(acceleration.scalarMult(dt));
-		translate(velocity.scalarMult(dt));
+		if (stunTimer > 0) {
+			stunTimer--;
+			handleStunFrames();
+		} else {
+			translate(velocity.scalarMult(dt));
+			handleMotionFrames();
+		}
 	}
 	public void zeroAll() {
 		velocity = Vector2f.zero();
@@ -228,7 +254,11 @@ public abstract class VectorShape extends JComponent{
 	public static void force(Vector2f vec) {
 		
 	}
+	public void updateFrame() {}
 // collisions
+	public void setMeshSpacing(byte m) {
+		meshSpacing = m;
+	}
 	public short detectBarelyCollidedPoints(VectorShape other) {
 		String collidedMesh = "";
 		for (int i = 0; i < 8; i++) {
@@ -254,15 +284,40 @@ public abstract class VectorShape extends JComponent{
 	public boolean detectCollision(VectorShape other) {
 		for (Vector2f point : cmesh) {
 			if (other.contains((Vector2f) point)) {
-				System.out.println("Collision");
 				return true; 
 			}	
 		}
 		return false;
 	}
-	public void handleCollisionInelastic(VectorShape other) {
-		handleXCollisionInelastic(other);
-		handleYCollisionInelastic(other);
+	public void handleCollision(VectorShape other, boolean elastic) {
+		if (elastic) {
+			handleXCollisionElastic(other);
+			handleYCollisionElastic(other);
+		} else {
+			handleXCollisionInelastic(other);
+			handleYCollisionInelastic(other);
+		}
+	}
+	public void handleXCollisionElastic(VectorShape other) {
+		short collidedPoints = detectCollidedPoints(other);
+		if (collidedPoints != 0) {
+			if (RCollisions.contains(collidedPoints) || LCollisions.contains(collidedPoints)) {
+				velocity.setX(-1 * velocity.getX());
+				bounceCount++;
+			}
+		}
+	}
+	public void handleYCollisionElastic(VectorShape other) {
+		short collidedPoints = detectCollidedPoints(other);
+		if (collidedPoints != 0) {
+			if (UCollisions.contains(collidedPoints) || DCollisions.contains(collidedPoints)) {
+				velocity.setY(-1 * velocity.getY());
+				bounceCount++;
+			}
+		}
+	}
+	public int getBounce() {
+		return bounceCount;
 	}
 	public void handleXCollisionInelastic(VectorShape other) {
 		short collidedPoints = detectCollidedPoints(other);
@@ -270,12 +325,14 @@ public abstract class VectorShape extends JComponent{
 			if (RCollisions.contains(collidedPoints)) {
 				translate(-1, 0);
 				handleXCollisionInelastic(other);
-				velocity.setX(0);
+				if (pathfinding) jump();
+				stopRight();
 			}
 			if (LCollisions.contains(collidedPoints)) {
 				translate(1, 0);
 				handleXCollisionInelastic(other);
-				velocity.setX(0);
+				if (pathfinding) jump();
+				stopLeft();
 			}
 		}
 	}
@@ -286,6 +343,9 @@ public abstract class VectorShape extends JComponent{
 				translate(0, -1);
 				handleYCollisionInelastic(other);
 				velocity.setY(0);
+				grounded = true;
+				jumpCount = 0;
+				jumping = false;
 			}
 			if (UCollisions.contains(collidedPoints)) {
 				translate(0, 1);
@@ -294,21 +354,151 @@ public abstract class VectorShape extends JComponent{
 			}
 		}
 	}
-/*
-        public char detectCollision(VectorShape other) {
-                if ((other.getX2() >= x1 && other.getX2() <= x2) || (other.getX1() <= x2 && other.getX1() >= x1)) return 'x';
-                if ((other.getY2() >= y1 && other.getY2() <= y2) || (other.getY1() <= y2 && other.getY1() >= y1)) return 'y';
-                return '';
-        }
-        public void handleCollision(VectorShape other) {
-                if ((other.getX2() >= x1 && other.getX2() <= x2) || (other.getX1() <= x2 && other.getX1() >= x1)) {
-			velocity.setX(0);
-			System.out.println("Colliding in X");
-                }
-		if ((other.getY2() >= y1 && other.getY2() <= y2) || (other.getY1() <= y2 && other.getY1() >= y1)) {
-			velocity.setY(0);
-			System.out.println("Colliding in Y");
+	public boolean isGrounded() {
+		return grounded;
+	}
+	public void ground() {
+		grounded = true;
+	}
+	public void unground() {
+		grounded = false;
+	}
+	// preset movements
+	protected float movementSpeed = 400;
+	protected float vjump = -800;
+	protected boolean movingLeft = false;
+	protected boolean movingRight = false;
+	protected boolean facingRight = true;
+	protected boolean jumping = false;
+	protected byte movementDirection = 0;
+	protected byte maxJump = 2;
+	protected byte jumpCount = 0;
+	public float getMovementSpeed() {
+		return movementSpeed;
+	}
+	public void setMovementSpeed(float s) {
+		movementSpeed = s;
+	}
+	public void setJump(float j) {
+		vjump = j;
+	}
+	public void setMaxJump(byte n) {
+		maxJump = n;
+	}
+	public void moveRight() {
+		if (!movingRight) {
+			movingRight = true;
+			movementDirection++;
+			handleMovement();
+			facingRight = true;
+		} 
+/*else if (pathfinding && movementDirection == 0) {
+			handleMovement();
+			facingRight = true;
+		}*/
+	}
+	public void stopRight() {
+		if (movingRight) {
+			movementDirection--;
+			handleMovement();
+			movingRight = false;
 		}
-        } 
-*/
+	}
+	public void moveLeft() {
+		if (!movingLeft) {
+			movingLeft = true;
+			movementDirection--;
+			handleMovement();
+			facingRight = false;
+		} 
+/*else if (pathfinding && movementDirection == 0) {
+			movementDirection--;
+			handleMovement();
+			facingRight = false;
+		}*/
+	}
+	public void stopLeft() {
+		if (movingLeft) {
+			movementDirection++;
+			handleMovement();
+			movingLeft = false;
+		}
+	}
+	public void jump() {
+                if (grounded) {
+			jumpCount = 0;
+		}
+                if (jumpCount < maxJump) {
+                        translate(0, -5);
+                        addVelocity(0, vjump);
+                        jumpCount++;
+			jumping = true;
+			grounded = false;
+                } 
+	}
+	public void handleMovement() {
+		velocity.setX(movementSpeed * movementDirection);
+	}
+	public void handleStunFrames() {}
+	public void handleMotionFrames() {}
+	// pathfinding stuff
+	protected boolean pathfinding = false;
+	protected int pathfindVelocity = 500;
+	protected int pathfindBoundary = 200;
+	protected boolean boundToTarget = false;
+	protected int maxSeparation = 400;
+	protected VectorShape pathfindTarget;
+	public void setPathfindTarget(VectorShape target, boolean bound) {
+		pathfindTarget = target;
+		boundToTarget = bound;
+		pathfinding = true;
+	}
+	public VectorShape getPathfindTarget() {
+		return pathfindTarget;
+	}
+	public void endPathfinding() {
+		pathfinding = false;
+	}
+	public void setMaxSeparation(int sep) {
+		maxSeparation = sep;
+	}
+	public void setPathfindBoundary(int bound) {
+		pathfindBoundary = bound;
+	}
+	public void setPathfindVelocity(int v) {
+		pathfindVelocity = v;
+	}
+	public void teleport(Vector2f pos) {
+		translate(pos.sub(tail));
+	}
+	public void pathfind() {
+		Vector2f pathfindVector = pathfindTarget.getFoot().sub(getFoot());
+		if (boundToTarget && pathfindVector.magSquared() > maxSeparation*maxSeparation) {
+			teleport(pathfindTarget.getTail());
+		} else if (pathfindVector.magSquared() > maxSeparation*maxSeparation) {
+			setMovementSpeed(0);
+		} else {
+			setMovementSpeed(pathfindVelocity);
+			if (pathfindVector.getX() < -1 * pathfindBoundary) {
+				if (movingRight) stopRight();
+				moveLeft();
+			} else if (pathfindVector.getX() > pathfindBoundary) {
+				if (movingLeft) stopLeft();
+				moveRight();
+			} else {
+				stopRight();
+				stopLeft();
+			}
+			if (pathfindVector.getY() < -100) jump();
+		}
+	}
+	public void drawVectors(Graphics g) {
+		tail.draw(g, Vector2f.zero());
+		vec.draw(g, tail);
+		acceleration.draw(g, foot);
+		velocity.draw(g, foot);
+	}
+	public String toString() {
+		return "VectorShape at " + tail;
+	}
 }

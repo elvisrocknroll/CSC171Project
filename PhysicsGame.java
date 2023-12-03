@@ -1,13 +1,25 @@
 /*
 WHATS GOING ON??
 
-implemented walking animation, index out of range error sometimes when changing frames. also need to add other textures
-also add dog bella
-*/
+wtf is the goal for this game tho
+add respawn method here and reset the map translation vector
+maybe add a separate method for handling map translation that also translates respawn point
+figure out whats going on with mtv??
+build maps finally
 
+DONE
+also add dog bella, write pathfinding for bella to follow (teleport if max distance exceeded)
+add boundary boxes and respawn point
+add dynamic map
+add enemies? include pathfinding for them too maybe, pathfinding should go in the vectorshape class
+jump and movement methods might have to go into vectorshape class too
+finish implementing load and save in Level class
+
+*/
 
 import javax.swing.*; //JFrame, JPanel, JComponent (drawable object)
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import java.awt.*;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -22,7 +34,12 @@ import java.awt.event.KeyListener;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.lang.Math;
+import java.lang.StringBuilder;
 import java.util.ArrayList;
+import java.util.Scanner;
+import java.io.FileReader;
+import java.io.FileWriter;
+import mypackage.Level;
 import mypackage.Vector2f;
 import mypackage.VecGraphics;
 import mypackage.shapes.*;
@@ -55,59 +72,71 @@ class Canvas extends JPanel {
 	private Color defaultColor = Color.black;
 	private int defaultLineWidth = 2;
 	private boolean buildMode = false;
-	private VectorShape drawnShape = null;	
-	private VectorShape selectedShape = null;
+	private ImageShape drawnShape = null;	
+	private ImageShape selectedShape = null;
 	private int dt = 15;
 	private int framerate = 60;
+	private int animationTimer = 0;
 	private int h;
 	private int w;
+	private Scanner console = new Scanner(System.in);
 	private Timer timer;
-	private ArrayList<VectorShape> hitboxes = new ArrayList<VectorShape>();
-	private ArrayList<VectorShape> focusedShapes = new ArrayList<VectorShape>();
+	private VectorRect focusedRight = new VectorRect(600, 0, 800, 800);
+	private VectorRect focusedLeft = new VectorRect(0, 000, 200, 800);
+	private VectorRect focusedTop = new VectorRect(200, 0, 600, 200);
+	private VectorRect focusedBottom = new VectorRect(0, 600, 800, 800);
+	private VectorRect spawnpoint = new VectorRect(new Vector2f(0, 0) , new Vector2f(500, 500));
+	private ArrayList<ImageShape> environment = new ArrayList<>();
+	private ArrayList<ImageShape> enemies = new ArrayList<>();
+	private ArrayList<VectorRect> boundaries = new ArrayList<>();
+	private ArrayList<VectorShape> background = new ArrayList<>();
+	private ArrayList<ImageShape> focusedShapes = new ArrayList<>();
+	private ArrayList<VectorShape> movableShapes = new ArrayList<>();
+	private ArrayList<ImageShape> draggableShapes = new ArrayList<>();
+	private Level level = new Level(spawnpoint, environment, enemies, boundaries);
 	private Vector2f gravity = new Vector2f(0, (float) 2000);
-	private ImageShape mario = new ImageShape("sprites/purtee_R_still.png", new Vector2f(80, 120), new Vector2f(500, 500)) {{
-		accelerate(gravity);
+	private ImageShape mario;
+	private ImageShape bella;
+	private ArrayList<String> environmentTextures = new ArrayList<>() {{
+		add("sprites/dirt_top.png");
+		add("sprites/dirt.png");
 	}};
-	private ImageShape ground = new ImageShape("sprites/dirt_top.png", new Vector2f(800, 100), new Vector2f(0, 700));
-	private float v = 400;
-	private float vjump = -800;
-	private Vector2f vup = new Vector2f(0, -v);
-	private Vector2f vdown = new Vector2f(0, v);
-	private Vector2f vleft = new Vector2f(-v, 0);
-	private Vector2f vright = new Vector2f(v, 0);
-	private String[] rightStillFrames = {"sprites/purtee_R_still.png"};
-	private String[] rightWalkFrames = {"sprites/purtee_R_walk1.png", "sprites/purtee_R_still.png", "sprites/purtee_R_walk2.png", "sprites/purtee_R_still.png"};
-	private String[] leftStillFrames = {"sprites/purtee_L_still.png"};
-	private String[] leftWalkFrames = {"sprites/purtee_L_walk1.png", "sprites/purtee_L_still.png", "sprites/purtee_L_walk2.png", "sprites/purtee_L_still.png"};
-	private String[] animationFrames = rightStillFrames;
-	private int frameNumber = 0;
-	private boolean movingLeft = false;
-	private boolean movingRight = true;	
+	private ArrayList<String> sprites = new ArrayList<>() {{
+		add("sprites/dirt_top.png");
+		add("sprites/dirt.png");
+	}};
+	private ArrayList<String> sprites = new ArrayList<>() {{
+		add("sprites/spawnpoint.png");
+		add("sprites/terminator_R_still.png");
+		
+	}};
+	private ArrayList<String> doorTextures = new ArrayList<>() {{
+		add("sprites/door1.png");
+	}};
+	private ArrayList<String> textures = environmentTextures;
+	private int textureSelector = 0;
+	private ImageShape ground = new ImageShape("sprites/dirt_top.png", new Vector2f(1600, 100), new Vector2f(0, 700));
+	private ImageShape bg_mountains = new ImageShape("sprites/bg_mountains.png", new Vector2f(1600, 800), new Vector2f(0, 0));
 
-	Canvas () {	
-		System.out.println("Origin in Canvas: " + Vector2f.zero());
-		//shapes.add(mario);
-		//shapes.add(floor);
-		hitboxes.add(ground);
-		focusedShapes.add(mario);
+	Canvas () {
+	/*
+		movableShapes.add(ground);
+	*/
+		initLevel(Level.load("flat.txt"));
+		background.add(bg_mountains);
 		timer = new Timer(Math.round(1000/framerate), new ActionListener() {
-			private int animationTimer = 0;
 			public void actionPerformed(ActionEvent e) {
 				animationTimer += 1;
-				if (animationTimer >= 10) {
-					if (frameNumber + 1 == animationFrames.length) {
-						frameNumber = 0;
-					} else {
-						frameNumber++;
+				if (animationTimer >= 30) {
+					for (VectorShape shape : focusedShapes) {
+						shape.updateFrame();
 					}
-					mario.setPath(animationFrames[frameNumber]);
 					animationTimer = 0;
 				}
 				repaint();
 			}
 		});
 		timer.start();
-		//circ.setVelocity(new Vector2f(0, -70));
 		this.addMouseListener(new ClickListener());
 		this.addMouseMotionListener(new DragListener());
 		this.addKeyListener(new KeyTrack());
@@ -115,25 +144,91 @@ class Canvas extends JPanel {
 		setFocusable(true);
 		requestFocusInWindow();
 	}
+	public void initLevel(Level loadedLevel) {
+		level = loadedLevel;
+		spawnpoint = level.getSpawnpoint();
+		mario = Level.getPurtee(spawnpoint.getTail());
+		bella = Level.getBella(spawnpoint.getTail());
+		level.addMario(mario);
+		level.addBella(bella);
+		environment = level.getEnvironment();
+		enemies = level.getEnemies();
+		doors = level.getDoors();
+		doorimg = level.getDoorimg();
+		boundaries = level.getBoundary();
+		spray = level.getLevelSpray();
+		focusedShapes = level.getFocusedShapes();
+		movableShapes = level.getMovableShapes();
+		draggableShapes = level.getDraggableShapes();
+		aggro();
+		bella.setPathfindTarget(mario, true);
+	}
 	@Override
         public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		h = getHeight();
                 w = getWidth();
+		Vector2f mapdr = new Vector2f(0, 0);
 	        if (buildMode) {
 			buildPaint(g);
 		} else {
-			for (VectorShape box : hitboxes) {
+			selectedDoor = null;
+			for (VectorShape layer : background) {
+				layer.calculateMotion(dt);
+				layer.draw(g);
+			}
+			for (VectorShape env : environment) {
 				for (VectorShape focus : focusedShapes) {
-					focus.handleCollisionInelastic(box);
+					focus.handleCollision(env, false);
 				}
-				box.calculateMotion(dt);
-				box.draw(g);
+				if (spray != null) spray.handleCollision(env, true);
+				env.draw(g);
+			}
+			for (ImageShape door : doorimg) {
+				door.draw(g);
+			}
+			for (Door door : doors) {
+				if (mario.detectCollision(door.getImage())) {
+					selectedDoor = door;
+					VectorRect highlight = new VectorRect(door.getImage().getVec(), door.getImage().getTail()) {{
+						draw(g, 3, Color.yellow);
+					}};
+				}
 			}
 			for (VectorShape focus : focusedShapes) {
 				focus.calculateMotion(dt);
 				focus.draw(g);
 			}
+			if (spray != null) {
+				if (spray.isAlive()) {
+					spray.calculateMotion(dt);
+					spray.draw(g);
+				} else {
+					level.removeSpray();
+					spray = null;
+				}
+			}
+			for (ImageShape enemy : enemies) {
+				if (mario.detectCollision(enemy)) respawn();
+				if (spray != null && spray.detectCollision(enemy)) {
+					enemy.stun(1000);
+					level.removeSpray();
+					spray = null;
+				}
+			}
+			if (mario.detectCollision(focusedRight)) translateMap((float) (-1 * mario.getMovementSpeed() * 0.001 * dt), 0);
+			if (mario.detectCollision(focusedLeft)) translateMap((float) (mario.getMovementSpeed() * 0.001 * dt), 0);
+			if (mario.detectCollision(focusedTop)) translateMap(0, (float) (mario.getMovementSpeed() * 0.001 * dt));
+			if (mario.detectCollision(focusedBottom)) translateMap(0, (float) (-1 * mario.getMovementSpeed() * 0.004 * dt));
+		}
+		if (vectorMode) {
+			for (VectorShape shape : movableShapes) {
+				shape.drawVectors(g);
+			}
+			for (VectorShape shape : background) {
+				shape.drawVectors(g);
+			}
+			if (spray != null) spray.drawVectors(g);
 		}
 	}
 	public void buildPaint(Graphics g) {
@@ -143,23 +238,93 @@ class Canvas extends JPanel {
 		g.setFont(new Font("Serif", Font.PLAIN, 12));
 		g.drawString("Pressed Key: " + keyChar, 10, 10);
 		g.drawString("Current Mode: " + drawMode, 10, 25);
-                if (drawnShape != null) drawnShape.draw(g, defaultLineWidth, defaultColor);
-                for (VectorShape shape : hitboxes) {
+		ImageShape selectedTexture = new ImageShape(textures.get(textureSelector), new Vector2f(20, 20), new Vector2f(10, 40)) {{
+			draw(g);
+		}};
+		ImageShape spawnghost = new ImageShape("sprites/spawnpoint.png", new Vector2f(80, 120), spawnpoint.getTail()) {{
+			draw(g);
+		}};
+                if (drawnShape != null) drawnShape.draw(g);
+                for (VectorShape shape : movableShapes) {
                         if (shape != null) shape.draw(g);
                 }               
                 if (selectedShape != null && drawMode.equals("drag")) selectedShape.draw(g, Color.blue);
 	}
+	/*public void consoleInput() {
+		switch (console.next()) {
+		case "load":
+			initLevel(Level.load(console.next()));
+			repaint();
+			break;
+		case "save";:
+			level.save(console.next());
+			break;
+		default:
+			System.out.println("unknown console command");
+		}
+	}*/
+	// map translation and respawn methods
+	private Vector2f mapTranslationVector = new Vector2f(0, 0);
+	public void translateMap(Vector2f dr) {
+		for (VectorShape shape : movableShapes) {
+			shape.translate(dr);
+		}
+		mapTranslationVector = mapTranslationVector.add(dr);
+	}
+	public void translateMap(float dx, float dy) {
+		for (VectorShape shape : movableShapes) {
+			shape.translate(dx, dy);
+		}
+		mapTranslationVector = mapTranslationVector.add(dx, dy);
+	}
+	public void recenterMap() {
+		for (VectorShape shape : movableShapes) {
+			shape.translate(mapTranslationVector.scalarMult(-1));
+		}
+		mapTranslationVector.set(0, 0);
+	}
+	public void recenterCamera() {
+		Vector2f dr = mapTranslationVector.sub(mario.getTail());
+		for (VectorShape shape : movableShapes) {
+			shape.translate(dr);
+		}
+		mapTranslationVector = mapTranslationVector.sub(dr);
+	}
+	public void respawn() {
+		recenterMap();
+		mario.teleport(spawnpoint.getTail());
+		aggro();
+	}
+	public void reload() {
+		initLevel(Level.load(level.getFilepath()));
+	}
+	public void aggro() {
+		for (ImageShape enemy : enemies) {
+			enemy.setPathfindTarget(mario, false);
+		}
+	}
+	// listeners
 	private class ClickListener extends MouseAdapter {
 		public void mousePressed(MouseEvent event) { // procedure for when a mouse click is registered
 			if (buildMode) {
 				dr = Vector2f.zero();
 				prev = event.getPoint();
 				prevVec = new Vector2f((float) prev.getX(),(float)  prev.getY());
-				for (VectorShape shape : hitboxes) {
+				if (drawMode.equals("character")) {
+					switch (textureSelector) {
+					case 0 : spawnpoint.setTail(prevVec);
+						break;
+					case 1 :
+						level.addEnemy(Level.getTerminator(prevVec)); 
+						break;
+					}
+				}
+				for (ImageShape shape : draggableShapes) {
 					if (shape != null && shape.contains(prev)) {
 						selectedShape = shape;
 						if (drawMode.equals("delete")) {
-							hitboxes.remove(selectedShape);
+							if (enemies.contains(selectedShape)) level.removeEnemy(selectedShape);
+							if (environment.contains(selectedShape)) level.removeEnvironment(selectedShape); 
 							selectedShape = null;
 						}
 					}
@@ -168,12 +333,34 @@ class Canvas extends JPanel {
 			} else {
 				prev = event.getPoint();
 				prevVec = new Vector2f((float) prev.getX(),(float)  prev.getY());
+				charToClick = prevVec.sub(bella.getTail());
+				if (spray == null) {
+					level.addSpray(bella.getFoot().add(0, -20), charToClick.unitVector().scalarMult(1200).add(bella.getVelocity()));
+					spray = level.getLevelSpray();
+				}
 				repaint();
 			}
 		}
 		public void mouseReleased(MouseEvent event) {
 			if (buildMode) {
-				hitboxes.add(drawnShape);
+				switch (drawMode) {
+				case "environment":
+					level.addEnvironment(drawnShape);
+					break;
+				case "door":
+					System.out.print("Enter door destination: ");
+					String destination = (String) JOptionPane.showInputDialog(
+						this, "Enter a destination for this door: ",
+						"Customized Dialog",
+						JOptionPane.PLAIN_MESSAGE,
+						null,
+						null,
+						"destination"
+					);
+					if (destination != null) level.addDoor(new Door(destination, drawnShape));
+					break;
+				}
+				drawnShape = null;
 				selectedShape = null;
 				repaint();
 			} else {
@@ -190,11 +377,8 @@ class Canvas extends JPanel {
 				int dy = (int) Math.round(current.getY() - prev.getY());
 				dr = dr.add(dx, dy);
 				switch (drawMode) {
-				case "line": drawnShape = new VectorLine(dr, prevVec); 
-					break;
-				case "rectangle": drawnShape = new ImageShape("sprites/dirt.png", dr, prevVec);
-					break;
-				case "circle": drawnShape = new VectorOval(dr, prevVec);
+				case "environment":
+				case "door" : drawnShape = new ImageShape(textures.get(textureSelector), dr, prevVec);
 					break;
 				case "drag": selectedShape.translate(dx, dy);
 					break;
@@ -207,6 +391,7 @@ class Canvas extends JPanel {
 			} else {
 				current = event.getPoint();
 				prev = current;
+				
 				repaint();
 			}
 		}
@@ -214,10 +399,8 @@ class Canvas extends JPanel {
         private class KeyTrack implements KeyListener {
                 public void keyTyped(KeyEvent event) {
                         keyChar = event.getKeyChar();
-//                      keyInputOperation(keyChar);
                 }
                 public void keyPressed(KeyEvent event) {
-                        System.out.println(event.getKeyCode());
                         keyCode = event.getKeyCode();
                         keyCodeInputOperation(keyCode);
                 }
@@ -227,176 +410,59 @@ class Canvas extends JPanel {
                 public void keyCodeInputOperation(int keyCode) {
 			if (buildMode) {
 				switch (keyCode) {
-				case (KeyEvent.VK_L): drawMode = "line";
+				case (KeyEvent.VK_L): drawMode = "load";
+					System.out.println("Enter save filename: ");
+					try {
+						initLevel(Level.load(console.next()));
+						repaint();
+					} catch(Exception e) {
+						System.out.println("Save file could not be found");
+					}
 					break;
-				case (KeyEvent.VK_R): drawMode = "rectangle";
+				case (KeyEvent.VK_S): drawMode = "save";
+					System.out.print("Enter save filename: ");
+					level.save(console.next());
+					break;
+				case (KeyEvent.VK_E): drawMode = "environment";
+					if (!textures.equals(environmentTextures)) {
+						textures = environmentTextures;
+						textureSelector = 0;
+					}
+					break;
+				case (KeyEvent.VK_P): drawMode = "door";
+					if (!textures.equals(doorTextures)) {
+						textures = doorTextures;
+						textureSelector = 0;
+					}
 					break;
 				case (KeyEvent.VK_D): drawMode = "drag";
 					break;
+				case (KeyEvent.VK_C): drawMode = "character";
+					if (!textures.equals(sprites)) {
+						textures = sprites;
+						textureSelector = 0;
+					}	
+					break;
 				case (KeyEvent.VK_ESCAPE): 
 					drawMode = "reset";
-					hitboxes.clear();
+					level.clear();
 					drawnShape = null;
-					break;
-				case (KeyEvent.VK_UP):
-					defaultLineWidth++;
-					break;
-				case (KeyEvent.VK_DOWN):
-					defaultLineWidth--;
 					break;
 				case (KeyEvent.VK_BACK_SPACE):
 					drawMode= "delete";
 					break;
-				default: drawMode = "rectangle";
-				}
-				repaint();
-			}
-                }
-        }
-	// define keybindings
-	private boolean pressed_D = false;
-	private boolean pressed_A = false;
-	
-	AbstractAction keyD = new AbstractAction() {
-		public void actionPerformed(ActionEvent e) {
-			if (!pressed_D) {
-				mario.addVelocity(vright);
-				pressed_D = true;
-				frameNumber = 0;
-			}
-			if (!movingRight) {
-				movingRight = true;
-			}
-			animationFrames = rightWalkFrames;
-		}
-	};
-	AbstractAction rkeyD = new AbstractAction() {
-		public void actionPerformed(ActionEvent e) {
-			if (mario.getVelocity().getX() != 0) mario.addVelocity(vleft);
-			pressed_D = false;
-			animationFrames = rightStillFrames;
-			frameNumber = 0;
-		}
-	};
-	AbstractAction keyA = new AbstractAction() {
-		public void actionPerformed(ActionEvent e) {
-			if (!pressed_A) {
-				mario.addVelocity(vleft);
-				pressed_A = true;
-				frameNumber = 0;
-			}
-			if (movingRight) {
-				movingRight = false;
-			}
-			animationFrames = leftWalkFrames;
-		}
-	};
-	AbstractAction rkeyA = new AbstractAction() {
-		public void actionPerformed(ActionEvent e) {
-			if (mario.getVelocity().getX() != 0) mario.addVelocity(vright);
-			pressed_A = false;
-			animationFrames = leftStillFrames;
-			frameNumber = 0;
-		}
-	};
-	AbstractAction keySPACE = new AbstractAction() {
-		public void actionPerformed(ActionEvent e) {
-			mario.translate(0, -5);
-			mario.addVelocity(0, vjump);
-			// add fix for double jumping
-		}
-	};
-	AbstractAction keyB = new AbstractAction() {
-		public void actionPerformed(ActionEvent e) {
-			if (buildMode) {
-				buildMode = false;
-				mario.setVelocity(0, 0);
-				timer.start();
-			} else {
-				buildMode = true;
-				timer.stop();
-			}
-		}
-	};
-	private void initKeyBindings() {
-		// key_D
-		this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_D, 0), "key_D");
-		this.getActionMap().put("key_D", keyD);
-		this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_D, 0, true), "rkey_D");
-		this.getActionMap().put("rkey_D", rkeyD);
-		// key_A
-		this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0), "key_A");
-		this.getActionMap().put("key_A", keyA);
-		this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0, true), "rkey_A");
-		this.getActionMap().put("rkey_A", rkeyA);
-		// key_SPACE
-		this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "key_SPACE");
-		this.getActionMap().put("key_SPACE", keySPACE);
-		// key_B
-		this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_B, 0), "key_B");
-		this.getActionMap().put("key_B", keyB);
-	}
-
-/*
-	private class KeyTrack implements KeyListener {
-		public void keyTyped(KeyEvent event) {
-			keyChar = event.getKeyChar();
-//			keyInputOperation(keyChar);
-		}
-		public void keyPressed(KeyEvent event) {
-			//System.out.println(event.getKeyCode());
-			keyCode = event.getKeyCode();
-			keyCodeInputOperation(keyCode);
-		}
-		public void keyReleased(KeyEvent event) {
-			keyCodeReleaseOperation(event.getKeyCode());
-		}
-		public void keyCodeInputOperation(int keyCode) {
-			switch (keyCode) {
-			case (KeyEvent.VK_R): 
-				drawMode = "reset";
-				circ = new VectorOval(new Vector2f(radius, radius), new Vector2f(w - radius, h - radius));
-				mario.zeroAll();
-				break;
-			case (KeyEvent.VK_W):
-				mario.addVelocity(vup);
-				break;
-			case (KeyEvent.VK_A):
-				mario.addVelocity(vleft);
-				break;
-			case (KeyEvent.VK_S):
-				mario.addVelocity(vdown);
-				break;
-			case (KeyEvent.VK_D):
-				mario.addVelocity(vright);
-				break;
-			case (KeyEvent.VK_SPACE):
-				mario.addVelocity(0, 10);
-				break;
-			}
-		}
-		public void keyCodeReleaseOperation(int keyCode) {
-			switch (keyCode) {
-			case (KeyEvent.VK_R): 
-				drawMode = "reset";
-				circ = new VectorOval(new Vector2f(radius, radius), new Vector2f(w - radius, h - radius));
-				mario.zeroAll();
-				mario.accelerate(gravity);
-				break;
-			case (KeyEvent.VK_W):
-				mario.addVelocity(vdown);
-				break;
-			case (KeyEvent.VK_A):
-				mario.addVelocity(vright);
-				break;
-			case (KeyEvent.VK_S):
-				mario.addVelocity(vup);
-				break;
-			case (KeyEvent.VK_D):
-				mario.addVelocity(vleft);
-				break;
-			}
-		} 
-	}
-*/
-}
+				case (KeyEvent.VK_UP):
+					for (VectorShape shape : movableShapes) {
+						translateMap(0, 10);
+					}
+					break;
+				case (KeyEvent.VK_DOWN):
+					for (VectorShape shape : movableShapes) {
+						translateMap(0, -10);
+					}
+					break;
+				case (KeyEvent.VK_LEFT):
+					for (VectorShape shape : movableShapes) {
+						translateMap(10, 0);
+					}
+					break;

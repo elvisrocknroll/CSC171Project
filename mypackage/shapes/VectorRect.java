@@ -9,8 +9,8 @@ import java.awt.Point;
 public class VectorRect extends VectorShape {
 
         public VectorRect(Vector2f vec, Vector2f tail) {
-                this.vec = vec;
-                this.tail = tail;
+                this.vec.set(vec);
+                this.tail.set(tail);
 		calculatePosition();
         }
         public VectorRect(float x1, float y1, float x2, float y2) {

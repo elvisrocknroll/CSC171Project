@@ -1,6 +1,8 @@
 package mypackage;
 
 import java.lang.Math;
+import java.awt.Graphics;
+import mypackage.shapes.*;
 
 public class Vector2f {
 
@@ -29,6 +31,12 @@ public class Vector2f {
 	public float getY() {
 		return y;
 	}
+	public void addX(float dx) {
+		x += dx;
+	}
+	public void addY(float dy) {
+		y += dy;
+	}
 	public void setX(float newX) {
 		x = newX;
 	}
@@ -38,6 +46,10 @@ public class Vector2f {
 	public void set(float newX, float newY) {
 		x = newX;
 		y = newY;
+	}
+	public void set(Vector2f other) {
+		x = other.getX();
+		y = other.getY();
 	}
 	public float magnitude() {
 		return (float) Math.sqrt(x * x + y * y);
@@ -50,6 +62,12 @@ public class Vector2f {
 	}
 	public Vector2f add(float dx, float dy) {
 		return new Vector2f(x + dx, y + dy);
+	}
+	public Vector2f sub(Vector2f other) {
+		return new Vector2f(x - other.getX(), y - other.getY());
+	}
+	public Vector2f sub(float dx, float dy) {
+		return new Vector2f(x - dx, y - dy);
 	}
 	public Vector2f unitVector() {
 		return new Vector2f(x/magnitude(), y/magnitude());
@@ -80,5 +98,10 @@ public class Vector2f {
                 if (Math.abs(a - b) <= epsilon)
                         return true;
                 return false;
+	}
+	public void draw(Graphics g, Vector2f tail) {
+		VectorLine line = new VectorLine(this, tail) {{
+			draw(g);
+		}};
 	}
 }
