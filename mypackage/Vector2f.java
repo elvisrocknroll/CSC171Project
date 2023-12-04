@@ -1,3 +1,11 @@
+/*
+Elvis Imamura
+CSC 171 Final Project
+Vector 2f class
+
+custom vector class which contains basic vector operations. fundamental class used to build all other classes in package
+*/
+
 package mypackage;
 
 import java.lang.Math;

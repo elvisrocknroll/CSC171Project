@@ -1,3 +1,11 @@
+/*
+Elvis Imamura
+CSC 171 Final Project
+VectorOval class
+
+the Vector2f based implementation of swing graphics ovals. inherits from VectorShape
+*/
+
 package mypackage.shapes;
 
 import mypackage.Vector2f;

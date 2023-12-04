@@ -1,0 +1,13 @@
+maps/lobby
+SPAWNPOINT
+240.000000 382.000000
+ENVIRONMENT
+sprites/environment/dirt_top.png 1506.000000 177.000000 105.000000 513.000000
+ENEMIES
+DOORS
+hoyt1 sprites/doors/hoytdoor.png 121.000000 147.000000 601.000000 374.000000
+goinghome1 sprites/doors/door1.png 86.000000 149.000000 896.000000 372.000000
+lab1 sprites/doors/door1.png 80.000000 150.000000 1457.000000 373.000000
+BOUNDARY
+BACKGROUND
+sprites/bg_mountains.png

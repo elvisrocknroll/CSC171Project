@@ -1,0 +1,31 @@
+maps/goinghome2
+SPAWNPOINT
+610.000000 415.000000
+ENVIRONMENT
+sprites/environment/dirt_top.png 1346.000000 113.000000 -588.000000 535.000000
+sprites/environment/dirt.png 172.000000 614.000000 714.000000 35.000000
+sprites/environment/dirt.png 1014.000000 75.000000 -158.000000 34.000000
+sprites/environment/dirt_top.png 124.000000 53.000000 163.000000 245.000000
+sprites/environment/dirt.png 74.000000 201.000000 277.000000 94.000000
+sprites/environment/dirt_top.png 114.000000 296.000000 -177.000000 296.000000
+sprites/environment/dirt.png 125.000000 721.000000 -682.000000 -73.000000
+sprites/environment/dirt.png 149.000000 64.000000 -588.000000 183.000000
+sprites/environment/dirt.png 122.000000 417.000000 -680.000000 -477.000000
+sprites/environment/dirt.png 155.000000 64.000000 -280.000000 -79.000000
+sprites/environment/dirt.png 325.000000 56.000000 -595.000000 -386.000000
+sprites/environment/dirt.png 68.000000 177.000000 -339.000000 -550.000000
+sprites/environment/dirt.png 188.000000 43.000000 -339.000000 -584.000000
+sprites/environment/dirt_top.png 122.000000 75.000000 -273.000000 -407.000000
+sprites/environment/dirt.png 144.000000 141.000000 -157.000000 -80.000000
+sprites/environment/road.png 1207.000000 107.000000 -12.000000 -73.000000
+sprites/environment/dirt.png 71.000000 554.000000 737.000000 -619.000000
+sprites/environment/dirt.png 166.000000 47.000000 592.000000 -251.000000
+sprites/environment/dirt.png 168.000000 52.000000 595.000000 -543.000000
+ENEMIES
+199.000000 117.000000
+-269.000000 -532.000000
+DOORS
+lobby sprites/doors/door1.png 259.000000 97.000000 807.000000 -166.000000
+BOUNDARY
+BACKGROUND
+sprites/backgrounds/wilson.png

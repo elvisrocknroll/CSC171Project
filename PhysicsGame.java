@@ -1,23 +1,10 @@
 /*
-WHATS GOING ON??
-
-wtf is the goal for this game tho
-add respawn method here and reset the map translation vector
-maybe add a separate method for handling map translation that also translates respawn point
-figure out whats going on with mtv??
-build maps finally
-
-DONE
-also add dog bella, write pathfinding for bella to follow (teleport if max distance exceeded)
-add boundary boxes and respawn point
-add dynamic map
-add enemies? include pathfinding for them too maybe, pathfinding should go in the vectorshape class
-jump and movement methods might have to go into vectorshape class too
-finish implementing load and save in Level class
-
+Elvis Imamura
+CSC 171 Final Project
+Main file
 */
 
-import javax.swing.*; //JFrame, JPanel, JComponent (drawable object)
+import javax.swing.*;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import java.awt.*;
@@ -39,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.FileReader;
 import java.io.FileWriter;
+import mypackage.*;
 import mypackage.Level;
 import mypackage.Vector2f;
 import mypackage.VecGraphics;
@@ -53,7 +41,7 @@ class Window extends JFrame {
 	Window() {
 		this.add(new Canvas());
 		this.setVisible(true);
-		this.setPreferredSize(new Dimension(800, 800));
+		this.setPreferredSize(new Dimension(1600, 800));
 		this.setTitle("My Game");
 		this.setResizable(true);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -66,70 +54,88 @@ class Canvas extends JPanel {
 	private Point current;
 	private Vector2f dr;
 	private Vector2f prevVec;
+	private Vector2f charToClick;
 	private String drawMode = "rectangle";
 	private char keyChar = ' ';
 	private int keyCode = 0;
 	private Color defaultColor = Color.black;
 	private int defaultLineWidth = 2;
 	private boolean buildMode = false;
+	private boolean vectorMode = false;
 	private ImageShape drawnShape = null;	
 	private ImageShape selectedShape = null;
-	private int dt = 15;
-	private int framerate = 60;
+	private Door selectedDoor;
+	private int dt = 3;
+	private int framerate = 300;
 	private int animationTimer = 0;
 	private int h;
 	private int w;
 	private Scanner console = new Scanner(System.in);
 	private Timer timer;
+	// boundaries to trigger camera panning
 	private VectorRect focusedRight = new VectorRect(600, 0, 800, 800);
 	private VectorRect focusedLeft = new VectorRect(0, 000, 200, 800);
 	private VectorRect focusedTop = new VectorRect(200, 0, 600, 200);
 	private VectorRect focusedBottom = new VectorRect(0, 600, 800, 800);
+	private VectorRect mainFocused = new VectorRect(0, 0, 800, 800);
+	// loaded level data
 	private VectorRect spawnpoint = new VectorRect(new Vector2f(0, 0) , new Vector2f(500, 500));
 	private ArrayList<ImageShape> environment = new ArrayList<>();
 	private ArrayList<ImageShape> enemies = new ArrayList<>();
 	private ArrayList<VectorRect> boundaries = new ArrayList<>();
-	private ArrayList<VectorShape> background = new ArrayList<>();
+	private ArrayList<Door> doors = new ArrayList<>();
+	private ArrayList<ImageShape> doorimg = new ArrayList<>();
+	private ImageShape background;
+	private int backgroundSelector = 0;
 	private ArrayList<ImageShape> focusedShapes = new ArrayList<>();
 	private ArrayList<VectorShape> movableShapes = new ArrayList<>();
 	private ArrayList<ImageShape> draggableShapes = new ArrayList<>();
-	private Level level = new Level(spawnpoint, environment, enemies, boundaries);
-	private Vector2f gravity = new Vector2f(0, (float) 2000);
+	private ImageShape spray;
+	private Level level = new Level(spawnpoint, environment, enemies, boundaries, doors);
 	private ImageShape mario;
 	private ImageShape bella;
+	// references for buildMode
+	private Vector2f gravity = new Vector2f(0, (float) 2000);
 	private ArrayList<String> environmentTextures = new ArrayList<>() {{
-		add("sprites/dirt_top.png");
-		add("sprites/dirt.png");
+		add("sprites/environment/dirt_top.png");
+		add("sprites/environment/dirt.png");
+		add("sprites/environment/floor1.png");
+		add("sprites/environment/floor2.png");
+		add("sprites/environment/road.png");
+		add("clear");
 	}};
 	private ArrayList<String> sprites = new ArrayList<>() {{
-		add("sprites/dirt_top.png");
-		add("sprites/dirt.png");
-	}};
-	private ArrayList<String> sprites = new ArrayList<>() {{
-		add("sprites/spawnpoint.png");
-		add("sprites/terminator_R_still.png");
+		add("sprites/characters/purtee/spawnpoint.png");
+		add("sprites/characters/terminator/terminator_R_still.png");
 		
 	}};
 	private ArrayList<String> doorTextures = new ArrayList<>() {{
-		add("sprites/door1.png");
+		add("sprites/doors/door1.png");
+		add("sprites/doors/hoytdoor.png");
+		add("sprites/doors/evilcomputer.png");
+	}};
+	private ArrayList<String> backgroundTextures = new ArrayList<>() {{
+		add("sprites/backgrounds/bg_mountains.png");
+		add("sprites/backgrounds/hoyt.png");
+		add("sprites/backgrounds/rushrhees.png");
+		add("sprites/backgrounds/wilson.png");
+		add("sprites/backgrounds/goinghome.png");
+		add("sprites/backgrounds/lab1.png");
+		add("sprites/backgrounds/lab2.png");
 	}};
 	private ArrayList<String> textures = environmentTextures;
 	private int textureSelector = 0;
-	private ImageShape ground = new ImageShape("sprites/dirt_top.png", new Vector2f(1600, 100), new Vector2f(0, 700));
-	private ImageShape bg_mountains = new ImageShape("sprites/bg_mountains.png", new Vector2f(1600, 800), new Vector2f(0, 0));
+	private ImageShape ground = new ImageShape("sprites/environment/dirt_top.png", new Vector2f(1600, 100), new Vector2f(0, 700));
+	private ImageShape bg_mountains = new ImageShape("sprites/backgrounds/bg_mountains.png", new Vector2f(1600, 800), new Vector2f(0, 0));
 
 	Canvas () {
-	/*
-		movableShapes.add(ground);
-	*/
-		initLevel(Level.load("flat.txt"));
-		background.add(bg_mountains);
-		timer = new Timer(Math.round(1000/framerate), new ActionListener() {
+		initLevel(Level.load("maps/lobby")); // loads lobby on launch
+		timer = new Timer(Math.round(1000/framerate), new ActionListener() { // global timer to handle all time-sensitive events
 			public void actionPerformed(ActionEvent e) {
 				animationTimer += 1;
 				if (animationTimer >= 30) {
 					for (VectorShape shape : focusedShapes) {
-						shape.updateFrame();
+						shape.updateFrame(); // updates frames every 30 ticks
 					}
 					animationTimer = 0;
 				}
@@ -144,7 +150,7 @@ class Canvas extends JPanel {
 		setFocusable(true);
 		requestFocusInWindow();
 	}
-	public void initLevel(Level loadedLevel) {
+	public void initLevel(Level loadedLevel) { // used to read level data into game
 		level = loadedLevel;
 		spawnpoint = level.getSpawnpoint();
 		mario = Level.getPurtee(spawnpoint.getTail());
@@ -162,21 +168,21 @@ class Canvas extends JPanel {
 		draggableShapes = level.getDraggableShapes();
 		aggro();
 		bella.setPathfindTarget(mario, true);
+		background = level.getBackground();
 	}
 	@Override
         public void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		h = getHeight();
-                w = getWidth();
+		h = this.getHeight();
+                w = this.getWidth();
+		background.resize(new Vector2f(w, h));
 		Vector2f mapdr = new Vector2f(0, 0);
 	        if (buildMode) {
 			buildPaint(g);
 		} else {
 			selectedDoor = null;
-			for (VectorShape layer : background) {
-				layer.calculateMotion(dt);
-				layer.draw(g);
-			}
+			background.draw(g);
+			// call motion handling for and draw all onscreen shapes
 			for (VectorShape env : environment) {
 				for (VectorShape focus : focusedShapes) {
 					focus.handleCollision(env, false);
@@ -209,13 +215,16 @@ class Canvas extends JPanel {
 				}
 			}
 			for (ImageShape enemy : enemies) {
-				if (mario.detectCollision(enemy)) respawn();
+				if (mario.detectCollision(enemy)) reload();
+				if (level.getFilepath().equals("maps/victory")) enemy.stun(10);
 				if (spray != null && spray.detectCollision(enemy)) {
 					enemy.stun(1000);
 					level.removeSpray();
 					spray = null;
 				}
 			}
+			// detect when mario leaves the focused area of the screen
+			if (!mainFocused.contains(mario.getTail().add(10, 10))) translateMap(mario.getTail().sub(300, 300).scalarMult(-1));
 			if (mario.detectCollision(focusedRight)) translateMap((float) (-1 * mario.getMovementSpeed() * 0.001 * dt), 0);
 			if (mario.detectCollision(focusedLeft)) translateMap((float) (mario.getMovementSpeed() * 0.001 * dt), 0);
 			if (mario.detectCollision(focusedTop)) translateMap(0, (float) (mario.getMovementSpeed() * 0.001 * dt));
@@ -225,9 +234,7 @@ class Canvas extends JPanel {
 			for (VectorShape shape : movableShapes) {
 				shape.drawVectors(g);
 			}
-			for (VectorShape shape : background) {
-				shape.drawVectors(g);
-			}
+			background.drawVectors(g);
 			if (spray != null) spray.drawVectors(g);
 		}
 	}
@@ -236,35 +243,37 @@ class Canvas extends JPanel {
 		g.setColor(defaultColor);
 		g2d.setStroke(new BasicStroke(defaultLineWidth));
 		g.setFont(new Font("Serif", Font.PLAIN, 12));
+		background.draw(g);
 		g.drawString("Pressed Key: " + keyChar, 10, 10);
 		g.drawString("Current Mode: " + drawMode, 10, 25);
 		ImageShape selectedTexture = new ImageShape(textures.get(textureSelector), new Vector2f(20, 20), new Vector2f(10, 40)) {{
 			draw(g);
 		}};
-		ImageShape spawnghost = new ImageShape("sprites/spawnpoint.png", new Vector2f(80, 120), spawnpoint.getTail()) {{
+		g.drawString("Window width: " + w, 10, 75);
+		g.drawString("Window height: " + h, 10, 90);
+		ImageShape spawnghost = new ImageShape("sprites/characters/purtee/spawnpoint.png", new Vector2f(80, 120), spawnpoint.getTail()) {{
 			draw(g);
 		}};
+		// draw shapes as they are being drawn
                 if (drawnShape != null) drawnShape.draw(g);
                 for (VectorShape shape : movableShapes) {
                         if (shape != null) shape.draw(g);
-                }               
+                }
                 if (selectedShape != null && drawMode.equals("drag")) selectedShape.draw(g, Color.blue);
 	}
-	/*public void consoleInput() {
-		switch (console.next()) {
-		case "load":
-			initLevel(Level.load(console.next()));
-			repaint();
-			break;
-		case "save";:
-			level.save(console.next());
-			break;
-		default:
-			System.out.println("unknown console command");
-		}
-	}*/
+	public String getInputDialogue(String prompt) { // used to retrieve text inputs from user within game
+		String input = (String) JOptionPane.showInputDialog(
+			this, prompt,
+			"Customized Dialog",
+			JOptionPane.PLAIN_MESSAGE,
+			null,
+			null,
+			"destination"
+		);
+		return input;
+	}
 	// map translation and respawn methods
-	private Vector2f mapTranslationVector = new Vector2f(0, 0);
+	private Vector2f mapTranslationVector = new Vector2f(0, 0); // keeps track of total camera panning from spawn
 	public void translateMap(Vector2f dr) {
 		for (VectorShape shape : movableShapes) {
 			shape.translate(dr);
@@ -305,15 +314,16 @@ class Canvas extends JPanel {
 	}
 	// listeners
 	private class ClickListener extends MouseAdapter {
-		public void mousePressed(MouseEvent event) { // procedure for when a mouse click is registered
+		public void mousePressed(MouseEvent event) { 
 			if (buildMode) {
 				dr = Vector2f.zero();
 				prev = event.getPoint();
 				prevVec = new Vector2f((float) prev.getX(),(float)  prev.getY());
+				// detect clicks on shapes
 				if (drawMode.equals("character")) {
 					switch (textureSelector) {
 					case 0 : spawnpoint.setTail(prevVec);
-						break;
+						break; 
 					case 1 :
 						level.addEnemy(Level.getTerminator(prevVec)); 
 						break;
@@ -328,11 +338,17 @@ class Canvas extends JPanel {
 							selectedShape = null;
 						}
 					}
+				} for (Door door : doors) {
+					if (door != null && door.getImage().contains(prev) && drawMode.equals("delete")) {
+						level.removeDoor(door);
+						selectedShape = null;
+					}
 				}
 				repaint();
 			} else {
 				prev = event.getPoint();
 				prevVec = new Vector2f((float) prev.getX(),(float)  prev.getY());
+				// handle bella projectiles
 				charToClick = prevVec.sub(bella.getTail());
 				if (spray == null) {
 					level.addSpray(bella.getFoot().add(0, -20), charToClick.unitVector().scalarMult(1200).add(bella.getVelocity()));
@@ -348,15 +364,8 @@ class Canvas extends JPanel {
 					level.addEnvironment(drawnShape);
 					break;
 				case "door":
-					System.out.print("Enter door destination: ");
-					String destination = (String) JOptionPane.showInputDialog(
-						this, "Enter a destination for this door: ",
-						"Customized Dialog",
-						JOptionPane.PLAIN_MESSAGE,
-						null,
-						null,
-						"destination"
-					);
+					// adds doors
+					String destination = getInputDialogue("Enter a destination for this door:");
 					if (destination != null) level.addDoor(new Door(destination, drawnShape));
 					break;
 				}
@@ -370,7 +379,7 @@ class Canvas extends JPanel {
 		}
 	}
 	private class DragListener extends MouseMotionAdapter {
-		public void mouseDragged(MouseEvent event) { // procedure for when a mouse drag is registered
+		public void mouseDragged(MouseEvent event) {
 			if (buildMode) {
 				current = event.getPoint();
 				int dx = (int) Math.round(current.getX() - prev.getX());
@@ -381,8 +390,6 @@ class Canvas extends JPanel {
 				case "door" : drawnShape = new ImageShape(textures.get(textureSelector), dr, prevVec);
 					break;
 				case "drag": selectedShape.translate(dx, dy);
-					break;
-				case "image": drawnShape = new ImageShape("sprites/mario.png", dr, prevVec);
 					break;
 				default:
 				}
@@ -396,6 +403,7 @@ class Canvas extends JPanel {
 			}
 		}
 	}
+	private String mapname;
         private class KeyTrack implements KeyListener {
                 public void keyTyped(KeyEvent event) {
                         keyChar = event.getKeyChar();
@@ -408,20 +416,25 @@ class Canvas extends JPanel {
 
                 }
                 public void keyCodeInputOperation(int keyCode) {
-			if (buildMode) {
+			// buildMode keybindings
+			if (buildMode) { 
 				switch (keyCode) {
 				case (KeyEvent.VK_L): drawMode = "load";
-					System.out.println("Enter save filename: ");
-					try {
-						initLevel(Level.load(console.next()));
-						repaint();
-					} catch(Exception e) {
-						System.out.println("Save file could not be found");
+					mapname = getInputDialogue("Enter save file name:");
+					if (mapname != null) {
+						try {
+							initLevel(Level.load("maps/" + mapname));
+							repaint();
+						} catch(Exception e) {
+							System.out.println("Save file could not be found");
+						}
 					}
 					break;
 				case (KeyEvent.VK_S): drawMode = "save";
-					System.out.print("Enter save filename: ");
-					level.save(console.next());
+					mapname = getInputDialogue("Enter save file name:");
+					if (mapname != null) {
+						level.save("maps/" + mapname);
+					}
 					break;
 				case (KeyEvent.VK_E): drawMode = "environment";
 					if (!textures.equals(environmentTextures)) {
@@ -452,17 +465,140 @@ class Canvas extends JPanel {
 					drawMode= "delete";
 					break;
 				case (KeyEvent.VK_UP):
-					for (VectorShape shape : movableShapes) {
-						translateMap(0, 10);
-					}
+					translateMap(0, 50);
 					break;
 				case (KeyEvent.VK_DOWN):
-					for (VectorShape shape : movableShapes) {
-						translateMap(0, -10);
-					}
+					translateMap(0, -50);
 					break;
 				case (KeyEvent.VK_LEFT):
-					for (VectorShape shape : movableShapes) {
-						translateMap(10, 0);
-					}
+					translateMap(50, 0);
 					break;
+				case (KeyEvent.VK_RIGHT):
+					translateMap(-50, 0);
+					break;
+				case (KeyEvent.VK_OPEN_BRACKET):
+					textureSelector--;
+					if (textureSelector < 0) textureSelector = textures.size() - 1;
+					break;
+				case (KeyEvent.VK_CLOSE_BRACKET):
+					textureSelector++;
+					if (textureSelector >= textures.size()) textureSelector = 0;
+					break;
+				case (KeyEvent.VK_BACK_SLASH):
+					System.out.println("changing background to " + backgroundSelector);
+					backgroundSelector++;
+					if (backgroundSelector >= backgroundTextures.size()) backgroundSelector = 0;
+					level.setBackground(backgroundTextures.get(backgroundSelector));
+					break;
+				default: drawMode = "environment";
+				}
+				mapname = null;
+				repaint();
+			}
+		}
+	}
+	// normal mode keybindings
+	Action keyD = new AbstractAction() {
+		public void actionPerformed(ActionEvent e) {
+			mario.moveRight();
+		}
+	};
+	Action rkeyD = new AbstractAction() {
+		public void actionPerformed(ActionEvent e) {
+			mario.stopRight();
+		}
+	};
+	Action keyA = new AbstractAction() {
+		public void actionPerformed(ActionEvent e) {
+			mario.moveLeft();
+		}
+	};
+	Action rkeyA = new AbstractAction() {
+		public void actionPerformed(ActionEvent e) {
+			mario.stopLeft();
+		}
+	};
+	Action keySPACE = new AbstractAction() {
+		public void actionPerformed(ActionEvent e) {
+			if (selectedDoor != null) {
+				initLevel(Level.load("maps/%s".formatted(selectedDoor.getDestination())));
+			} else {
+				mario.jump();
+			}
+		}
+	};
+	Action keyB = new AbstractAction() {
+		public void actionPerformed(ActionEvent e) {
+			if (buildMode) {
+				buildMode = false;
+				timer.start();
+				aggro();
+				repaint();
+			} else {
+				reload();
+				textures = environmentTextures;
+				textureSelector = 0;
+				drawMode = "environment";
+				buildMode = true;
+				timer.stop();
+				repaint();
+			}
+		}
+	};
+	Action keyR = new AbstractAction() {
+		public void actionPerformed(ActionEvent e) {
+			if (!buildMode) reload();
+		}
+	};
+	Action keyV = new AbstractAction() {
+		public void actionPerformed(ActionEvent e) {
+			if (vectorMode) {
+				vectorMode = false;
+			} else {
+				vectorMode = true;
+			}
+		}
+	};
+	Action keyPlus = new AbstractAction() {
+		public void actionPerformed(ActionEvent e) {
+			dt++;
+		}
+	};
+	Action keyMinus = new AbstractAction() {
+		public void actionPerformed(ActionEvent e) {
+			if (dt > 1) dt--;
+		}
+	};
+	public void initKeyBindings() {
+		// keyD
+		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_D, 0), "key_D");
+		getActionMap().put("key_D", this.keyD);
+		// rkeyD
+		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_D, 0, true), "rkey_D");
+		getActionMap().put("rkey_D", this.rkeyD);
+		// keyA
+		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0), "key_A");
+		getActionMap().put("key_A", this.keyA);
+		// rkeyA
+		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0, true), "rkey_A");
+		getActionMap().put("rkey_A", this.rkeyA);
+		// keySPACE
+		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "key_SPACE");
+		getActionMap().put("key_SPACE", this.keySPACE);
+		// keyB
+		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_B, 0), "key_B");
+		getActionMap().put("key_B", this.keyB);
+		// keyR
+		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_R, 0), "key_R");
+		getActionMap().put("key_R", this.keyR);
+		// keyV
+		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_V, 0), "key_V");
+		getActionMap().put("key_V", this.keyV);
+		// keyPlus
+		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, 0), "key_plus");
+		getActionMap().put("key_plus", this.keyPlus);
+		// keyMinus
+		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, 0), "key_minus");
+		getActionMap().put("key_minus", this.keyMinus);
+	}
+}

@@ -1,3 +1,11 @@
+/*
+Elvis Imamura
+CSC 171 Final Project
+Level class
+
+holds the information and methods related to storing and loading level/map data. also contains referencable instances of ImageShape which represent the characters in the game
+*/
+
 package mypackage;
 import mypackage.*;
 import mypackage.shapes.*;
@@ -12,6 +20,7 @@ public class Level {
 	private String filepath;
 	private ImageShape mario;
 	private ImageShape bella;
+	private Vector2f originalspawn = Vector2f.zero();
 	private VectorRect spawn = new VectorRect(new Vector2f(0, 0), new Vector2f(0, 0));
 	private ImageShape background = new ImageShape("sprites/backgrounds/bg_mountains.png", new Vector2f(800, 800), Vector2f.zero());
 	private ArrayList<ImageShape> environment = new ArrayList<>();
@@ -35,6 +44,8 @@ public class Level {
 				new String[]{"sprites/characters/purtee/purtee_R_jump.png"},
 				new String[]{"sprites/characters/purtee/purtee_L_jump.png"}
 			);
+			setMaxJump((byte) 1);
+			setJump(-1200);
 		}};
 		return purtee;
 	}
@@ -203,11 +214,15 @@ public class Level {
 	public void setFilepath(String s) {
 		filepath = s;
 	}
+	public Vector2f getOriginalSpawn() {
+		return originalspawn;
+	}
 	public VectorRect getSpawnpoint() {
 		return spawn;
 	}
-	public void setSpawnpoint(VectorRect spawn) {
-		this.spawn = spawn;
+	public void setSpawnpoint(Vector2f spawnpoint) {
+		spawn.setTail(spawnpoint);
+		originalspawn = spawnpoint;
 	}
 	public ArrayList<ImageShape> getEnvironment() {
 		return environment;
@@ -302,5 +317,8 @@ public class Level {
 		boundary.clear();
 		focusedShapes.clear();
 		movableShapes.clear();
+		doors.clear();
+		draggableShapes.clear();
+		doorimg.clear();
 	}
 }

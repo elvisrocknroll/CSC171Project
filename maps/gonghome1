@@ -1,0 +1,23 @@
+maps/gonghome1
+SPAWNPOINT
+535.000000 446.000000
+ENVIRONMENT
+sprites/environment/dirt_top.png 1396.000000 131.000000 136.000000 585.000000
+sprites/environment/dirt.png 123.000000 733.000000 26.000000 -16.000000
+sprites/environment/dirt_top.png 455.000000 79.000000 624.000000 277.000000
+sprites/environment/dirt_top.png 371.000000 74.000000 977.000000 -31.000000
+sprites/environment/dirt_top.png 344.000000 79.000000 433.000000 -190.000000
+sprites/environment/dirt.png 446.000000 92.000000 -324.000000 -15.000000
+sprites/environment/dirt.png 127.000000 212.000000 -318.000000 -184.000000
+sprites/environment/dirt_top.png 217.000000 95.000000 -64.000000 -267.000000
+sprites/environment/dirt.png 94.000000 267.000000 55.000000 -229.000000
+sprites/environment/dirt_top.png 513.000000 120.000000 -704.000000 -273.000000
+sprites/environment/dirt.png 192.000000 733.000000 1463.000000 -17.000000
+sprites/environment/dirt.png 190.000000 583.000000 1464.000000 -584.000000
+ENEMIES
+176.000000 450.000000
+-31.000000 -148.000000
+DOORS
+BOUNDARY
+BACKGROUND
+sprites/backgrounds/rushrhees.png

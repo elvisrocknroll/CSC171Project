@@ -1,3 +1,11 @@
+/*
+Elvis Imamura
+CSC 171 Final Project
+VectorShape class
+
+the parent abstract class of all other shapes; Vector2f based implementation of java swing graphics also contains all methods for motion, physics, and pathfinding
+*/
+
 package mypackage.shapes;
 
 import mypackage.Vector2f;
@@ -42,32 +50,32 @@ public abstract class VectorShape extends JComponent{
 	protected int stunTimer = 0;
 	
 	private ArrayList<Short> UCollisions = new ArrayList<>() {{
-		this.add(Short.parseShort("10000000", 2)); // 10000000
-		this.add(Short.parseShort("11000000", 2)); // 11000000
-		this.add(Short.parseShort("01000000", 2)); // 01000000
+		this.add(Short.parseShort("10000000", 2)); 
+		this.add(Short.parseShort("11000000", 2)); 
+		this.add(Short.parseShort("01000000", 2)); 
 		this.add(Short.parseShort("11110000", 2));
 		this.add(Short.parseShort("11111100", 2));
 	}};
 	private ArrayList<Short> DCollisions = new ArrayList<>() {{
-		this.add(Short.parseShort("00000010", 2)); // 00000010
-		this.add(Short.parseShort("00000011", 2)); // 00000011
-		this.add(Short.parseShort("00000001", 2)); // 00000001
+		this.add(Short.parseShort("00000010", 2)); 
+		this.add(Short.parseShort("00000011", 2)); 
+		this.add(Short.parseShort("00000001", 2)); 
 		this.add(Short.parseShort("00001111", 2));
 		this.add(Short.parseShort("00111111", 2));
 	}};
 	private ArrayList<Short> LCollisions = new ArrayList<>() {{
-		this.add(Short.parseShort("10100000", 2)); // 10100000
-		this.add(Short.parseShort("10101000", 2)); // 10101000
-		this.add(Short.parseShort("10101010", 2)); // 10101010
-		this.add(Short.parseShort("00101010", 2)); // 00101010
-		this.add(Short.parseShort("00001010", 2)); // 00001010
+		this.add(Short.parseShort("10100000", 2));
+		this.add(Short.parseShort("10101000", 2));
+		this.add(Short.parseShort("10101010", 2));
+		this.add(Short.parseShort("00101010", 2));
+		this.add(Short.parseShort("00001010", 2));
 	}};
 	private ArrayList<Short> RCollisions = new ArrayList<>() {{
-		this.add(Short.parseShort("01010000", 2)); // 01010000
-		this.add(Short.parseShort("01010100", 2)); // 01010100
-		this.add(Short.parseShort("01010101", 2)); // 01010101
-		this.add(Short.parseShort("00010101", 2)); // 00010101
-		this.add(Short.parseShort("00000101", 2)); // 00000101
+		this.add(Short.parseShort("01010000", 2));
+		this.add(Short.parseShort("01010100", 2));
+		this.add(Short.parseShort("01010101", 2));
+		this.add(Short.parseShort("00010101", 2));
+		this.add(Short.parseShort("00000101", 2));
 	}};
 
 	public abstract float getArea();
@@ -190,6 +198,7 @@ public abstract class VectorShape extends JComponent{
 		g2d.setStroke(new BasicStroke(stroke));
 		g.setColor(color);
 	}
+	// kinematic physics methods
 	public void translate(Vector2f shift) {
 		tail.set(tail.getX() + shift.getX(), tail.getY() + shift.getY());
 		calculatePosition();
@@ -237,11 +246,11 @@ public abstract class VectorShape extends JComponent{
 	public void calculateMotion(float t) {
 		if (pathfinding) pathfind();
 		float dt = (float) 0.001*t;
-		addVelocity(acceleration.scalarMult(dt));
 		if (stunTimer > 0) {
 			stunTimer--;
 			handleStunFrames();
 		} else {
+			addVelocity(acceleration.scalarMult(dt));
 			translate(velocity.scalarMult(dt));
 			handleMotionFrames();
 		}
@@ -255,7 +264,7 @@ public abstract class VectorShape extends JComponent{
 		
 	}
 	public void updateFrame() {}
-// collisions
+	// collisions
 	public void setMeshSpacing(byte m) {
 		meshSpacing = m;
 	}
@@ -392,10 +401,6 @@ public abstract class VectorShape extends JComponent{
 			handleMovement();
 			facingRight = true;
 		} 
-/*else if (pathfinding && movementDirection == 0) {
-			handleMovement();
-			facingRight = true;
-		}*/
 	}
 	public void stopRight() {
 		if (movingRight) {
@@ -411,11 +416,6 @@ public abstract class VectorShape extends JComponent{
 			handleMovement();
 			facingRight = false;
 		} 
-/*else if (pathfinding && movementDirection == 0) {
-			movementDirection--;
-			handleMovement();
-			facingRight = false;
-		}*/
 	}
 	public void stopLeft() {
 		if (movingLeft) {
