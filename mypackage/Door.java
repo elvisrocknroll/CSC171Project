@@ -1,3 +1,4 @@
+package mypackage;
 /*
 Elvis Imamura
 CSC 171 Final Project
@@ -6,7 +7,6 @@ Door class
 handles the navigation between levels using an associated level destination
 */
 
-package mypackage;
 import mypackage.shapes.*;
 
 public class Door {

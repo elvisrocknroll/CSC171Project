@@ -1,3 +1,4 @@
+package mypackage.shapes;
 /*
 Elvis Imamura
 CSC 171 Final Project
@@ -5,9 +6,6 @@ VectorShape class
 
 the parent abstract class of all other shapes; Vector2f based implementation of java swing graphics also contains all methods for motion, physics, and pathfinding
 */
-
-package mypackage.shapes;
-
 import mypackage.Vector2f;
 import java.awt.*;
 import java.awt.Graphics;

@@ -29,7 +29,6 @@ import java.io.FileWriter;
 import mypackage.*;
 import mypackage.Level;
 import mypackage.Vector2f;
-import mypackage.VecGraphics;
 import mypackage.shapes.*;
 
 public class PhysicsGame {

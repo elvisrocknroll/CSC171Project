@@ -1,3 +1,4 @@
+package mypackage;
 /*
 Elvis Imamura
 CSC 171 Final Project
@@ -6,7 +7,6 @@ Level class
 holds the information and methods related to storing and loading level/map data. also contains referencable instances of ImageShape which represent the characters in the game
 */
 
-package mypackage;
 import mypackage.*;
 import mypackage.shapes.*;
 import java.io.FileReader;

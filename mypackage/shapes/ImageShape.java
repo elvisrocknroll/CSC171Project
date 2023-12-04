@@ -1,3 +1,4 @@
+package mypackage.shapes;
 /*
 Elvis Imamura
 CSC 171 Final Project
@@ -5,9 +6,6 @@ ImageShape class
 
 main class used to represent all in-game objects as externally-sourced images. also handles animation and keeps track of appropriate frames and cycling based on situation. inherits from VectorShape
 */
-
-package mypackage.shapes;
-
 import mypackage.Vector2f;
 import java.lang.Math;
 import java.io.File;

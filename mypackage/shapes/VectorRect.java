@@ -1,3 +1,4 @@
+package mypackage.shapes;
 /*
 Elvis Imamura
 CSC 171 Final Project
@@ -5,9 +6,6 @@ VectorRect class
 
 contains the Vector2f based implementation of java swing rectangles. inherits from VectorShape
 */
-
-package mypackage.shapes;
-
 import mypackage.Vector2f;
 import java.lang.Math;
 import java.awt.Graphics;
