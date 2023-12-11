@@ -31,6 +31,7 @@ public class Level {
 	private ArrayList<ImageShape> focusedShapes = new ArrayList<>();
 	private ArrayList<VectorShape> movableShapes = new ArrayList<>();
 	private ArrayList<ImageShape> draggableShapes = new ArrayList<>();
+	private boolean hasBella = true;
 	private ImageShape spray;
 
 	public static ImageShape getPurtee(Vector2f tail) {
@@ -131,6 +132,7 @@ public class Level {
 		ArrayList<VectorRect> boundary = new ArrayList<>();
 		ArrayList<Door> doors = new ArrayList<>();
 		String bg;
+		boolean hasBella;
 		try {
 			FileReader fr = new FileReader(filepath);
 			Scanner s = new Scanner(fr);
@@ -154,16 +156,22 @@ public class Level {
 				boundary.add(new VectorRect(s.nextFloat(), s.nextFloat(), s.nextFloat(), s.nextFloat()));
 			}
 			s.next();
-			if (s.hasNext()) {
+			if (s.hasNext() && !s.hasNextBoolean()) {
 				bg = s.next();
 			} else {
 				bg = "sprites/backgrounds/bg_mountains.png";
+			}
+			if (s.hasNextBoolean()) {
+				hasBella = s.nextBoolean();
+			} else {
+				hasBella = true;
 			}
 			fr.close();
 			System.out.println("Successfully loaded level from " + filepath);
 			return new Level(spawn, environment, enemies, boundary, doors) {{
 				setFilepath(file);
 				setBackground(bg);
+				setBella(hasBella);
 			}};
 		} catch(Exception e) {
 			System.out.println("Error loading map");
@@ -194,7 +202,12 @@ public class Level {
 				fw.write("%f %f %f %f\n".formatted(bd.getVec().getX(), bd.getVec().getY(), bd.getTail().getX(), bd.getTail().getY()));
 			}
 			fw.write("BACKGROUND\n");
-			fw.write(background.getPath());
+			fw.write("%s\n".formatted(background.getPath()));
+			if (hasBella) {
+				fw.write("true");
+			} else {
+				fw.write("false");
+			}
 			fw.close();
 			System.out.println("Saved level file to " + filepath);
 		} catch(Exception e) {
@@ -286,6 +299,12 @@ public class Level {
 	}
 	public void resetBella(ImageShape bella) {
 		this.bella = bella;
+	}
+	public void setBella(boolean b) {
+		hasBella = b;
+	}
+	public boolean hasBella() {
+		return hasBella;
 	}
 	public ArrayList<VectorRect> getBoundary() {
 		return boundary;

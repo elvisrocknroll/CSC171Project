@@ -93,6 +93,7 @@ class Canvas extends JPanel {
 	private Level level = new Level(spawnpoint, environment, enemies, boundaries, doors);
 	private ImageShape mario;
 	private ImageShape bella;
+	private boolean hasBella;
 	// references for buildMode
 	private Vector2f gravity = new Vector2f(0, (float) 2000);
 	private ArrayList<String> environmentTextures = new ArrayList<>() {{
@@ -121,6 +122,11 @@ class Canvas extends JPanel {
 		add("sprites/backgrounds/goinghome.png");
 		add("sprites/backgrounds/lab1.png");
 		add("sprites/backgrounds/lab2.png");
+		add("sprites/backgrounds/bedroom.png");
+		add("sprites/backgrounds/bathroom.png");
+		add("sprites/backgrounds/kitchen.png");
+		add("sprites/backgrounds/livingroom.png");
+		add("sprites/backgrounds/basement.png");
 	}};
 	private ArrayList<String> textures = environmentTextures;
 	private int textureSelector = 0;
@@ -153,9 +159,13 @@ class Canvas extends JPanel {
 		level = loadedLevel;
 		spawnpoint = level.getSpawnpoint();
 		mario = Level.getPurtee(spawnpoint.getTail());
-		bella = Level.getBella(spawnpoint.getTail());
 		level.addMario(mario);
-		level.addBella(bella);
+		hasBella = level.hasBella();
+		if (hasBella) {
+			bella = Level.getBella(spawnpoint.getTail());
+			level.addBella(bella);
+			bella.setPathfindTarget(mario, true);
+		}
 		environment = level.getEnvironment();
 		enemies = level.getEnemies();
 		doors = level.getDoors();
@@ -166,7 +176,6 @@ class Canvas extends JPanel {
 		movableShapes = level.getMovableShapes();
 		draggableShapes = level.getDraggableShapes();
 		aggro();
-		bella.setPathfindTarget(mario, true);
 		background = level.getBackground();
 	}
 	@Override
@@ -204,7 +213,7 @@ class Canvas extends JPanel {
 				focus.calculateMotion(dt);
 				focus.draw(g);
 			}
-			if (spray != null) {
+			if (hasBella && spray != null) {
 				if (spray.isAlive()) {
 					spray.calculateMotion(dt);
 					spray.draw(g);
@@ -348,8 +357,8 @@ class Canvas extends JPanel {
 				prev = event.getPoint();
 				prevVec = new Vector2f((float) prev.getX(),(float)  prev.getY());
 				// handle bella projectiles
-				charToClick = prevVec.sub(bella.getTail());
-				if (spray == null) {
+				if (hasBella && spray == null) {
+					charToClick = prevVec.sub(bella.getTail());
 					level.addSpray(bella.getFoot().add(0, -20), charToClick.unitVector().scalarMult(1200).add(bella.getVelocity()));
 					spray = level.getLevelSpray();
 				}
@@ -416,6 +425,7 @@ class Canvas extends JPanel {
                 }
                 public void keyCodeInputOperation(int keyCode) {
 			// buildMode keybindings
+			System.out.println(keyCode);
 			if (buildMode) { 
 				switch (keyCode) {
 				case (KeyEvent.VK_L): drawMode = "load";
@@ -568,6 +578,11 @@ class Canvas extends JPanel {
 			if (dt > 1) dt--;
 		}
 	};
+	Action keyEscape = new AbstractAction() {
+		public void actionPerformed(ActionEvent e) {
+			if (!buildMode)	initLevel(Level.load("maps/lobby"));
+		}
+	};
 	public void initKeyBindings() {
 		// keyD
 		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_D, 0), "key_D");
@@ -599,5 +614,8 @@ class Canvas extends JPanel {
 		// keyMinus
 		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, 0), "key_minus");
 		getActionMap().put("key_minus", this.keyMinus);
+		// keyEscape
+		getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "key_escape");
+		getActionMap().put("key_escape", this.keyEscape);
 	}
 }

@@ -25,7 +25,8 @@ ENEMIES
 199.000000 117.000000
 -269.000000 -532.000000
 DOORS
-lobby sprites/doors/door1.png 259.000000 97.000000 807.000000 -166.000000
+lobby sprites/doors/car.png 259.000000 97.000000 807.000000 -166.000000
 BOUNDARY
 BACKGROUND
 sprites/backgrounds/wilson.png
+false

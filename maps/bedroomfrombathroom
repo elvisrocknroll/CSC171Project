@@ -1,0 +1,32 @@
+maps/bedroomfrombathroom
+SPAWNPOINT
+581.000000 422.000000
+ENVIRONMENT
+sprites/environment/floor2.png 968.000000 43.000000 -231.000000 327.000000
+sprites/environment/floor2.png 56.000000 312.000000 681.000000 354.000000
+sprites/environment/floor2.png 776.000000 68.000000 -48.000000 563.000000
+sprites/environment/floor2.png 46.000000 88.000000 -48.000000 607.000000
+sprites/environment/floor2.png 1177.000000 48.000000 -440.000000 664.000000
+sprites/environment/floor2.png 53.000000 436.000000 -698.000000 474.000000
+sprites/environment/floor2.png 1609.000000 57.000000 -663.000000 852.000000
+sprites/environment/floor2.png 85.000000 520.000000 131.000000 -181.000000
+sprites/environment/floor2.png 203.000000 52.000000 -329.000000 143.000000
+sprites/environment/floor2.png 161.000000 49.000000 4.000000 -82.000000
+sprites/environment/floor2.png 271.000000 42.000000 199.000000 52.000000
+sprites/environment/floor2.png 64.000000 414.000000 695.000000 -353.000000
+sprites/environment/floor2.png 521.000000 174.000000 -721.000000 326.000000
+sprites/environment/floor2.png 73.000000 642.000000 -713.000000 -298.000000
+sprites/environment/floor2.png 300.000000 55.000000 715.000000 6.000000
+sprites/environment/floor2.png 80.000000 858.000000 943.000000 51.000000
+sprites/environment/floor2.png 113.000000 49.000000 858.000000 658.000000
+sprites/environment/floor2.png 114.000000 49.000000 726.000000 433.000000
+sprites/environment/floor2.png 113.000000 44.000000 -661.000000 663.000000
+ENEMIES
+279.000000 191.000000
+DOORS
+livingroomfrombedroom sprites/doors/door1.png 89.000000 161.000000 -529.000000 164.000000
+bathroomfrombedroom sprites/doors/door1.png 80.000000 138.000000 578.000000 426.000000
+BOUNDARY
+BACKGROUND
+sprites/backgrounds/bedroom.png
+true

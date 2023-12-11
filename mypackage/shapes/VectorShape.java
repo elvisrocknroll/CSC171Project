@@ -333,14 +333,18 @@ public abstract class VectorShape extends JComponent{
 				translate(-1, 0);
 				handleXCollisionInelastic(other);
 				if (pathfinding) jump();
-				stopRight();
+				//stopRight();
+				xColliding = true;
 			}
 			if (LCollisions.contains(collidedPoints)) {
 				translate(1, 0);
 				handleXCollisionInelastic(other);
 				if (pathfinding) jump();
-				stopLeft();
+				//stopLeft();
+				xColliding = true;
 			}
+		} else {
+			xColliding = false;
 		}
 	}
 	public void handleYCollisionInelastic(VectorShape other) {
@@ -377,6 +381,7 @@ public abstract class VectorShape extends JComponent{
 	protected boolean movingRight = false;
 	protected boolean facingRight = true;
 	protected boolean jumping = false;
+	protected boolean xColliding = false;
 	protected byte movementDirection = 0;
 	protected byte maxJump = 2;
 	protected byte jumpCount = 0;
@@ -435,7 +440,11 @@ public abstract class VectorShape extends JComponent{
                 } 
 	}
 	public void handleMovement() {
-		velocity.setX(movementSpeed * movementDirection);
+		if (xColliding) {
+			velocity.setX(0);
+		} else {
+			velocity.setX(movementSpeed * movementDirection);
+		}
 	}
 	public void handleStunFrames() {}
 	public void handleMotionFrames() {}

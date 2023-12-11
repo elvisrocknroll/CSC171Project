@@ -1,0 +1,32 @@
+maps/livingroomfrombedroom
+SPAWNPOINT
+738.000000 458.000000
+ENVIRONMENT
+sprites/environment/floor2.png 1462.000000 101.000000 -513.000000 607.000000
+sprites/environment/floor2.png 120.000000 640.000000 -597.000000 68.000000
+sprites/environment/floor2.png 94.000000 516.000000 895.000000 192.000000
+sprites/environment/floor2.png 80.000000 262.000000 129.000000 389.000000
+sprites/environment/floor2.png 522.000000 82.000000 385.000000 275.000000
+sprites/environment/floor2.png 270.000000 71.000000 -503.000000 182.000000
+sprites/environment/floor2.png 104.000000 296.000000 -580.000000 -206.000000
+sprites/environment/floor2.png 1155.000000 89.000000 -529.000000 -205.000000
+sprites/environment/floor2.png 96.000000 519.000000 894.000000 -256.000000
+sprites/environment/floor2.png 117.000000 402.000000 65.000000 -576.000000
+sprites/environment/floor2.png 884.000000 62.000000 114.000000 -576.000000
+sprites/environment/floor2.png 102.000000 297.000000 895.000000 -533.000000
+sprites/environment/floor2.png 212.000000 48.000000 708.000000 14.000000
+sprites/environment/floor2.png 55.000000 238.000000 384.000000 63.000000
+sprites/environment/floor2.png 157.000000 51.000000 389.000000 61.000000
+sprites/environment/floor2.png 28.000000 41.000000 708.000000 55.000000
+sprites/environment/floor2.png 197.000000 46.000000 10.000000 19.000000
+sprites/environment/floor2.png 125.000000 47.000000 -117.000000 286.000000
+ENEMIES
+611.000000 151.000000
+535.000000 479.000000
+DOORS
+bedroomfromlivingroom sprites/doors/door1.png 82.000000 144.000000 737.000000 462.000000
+kitchenfromlivingroom sprites/doors/door1.png 85.000000 142.000000 275.000000 -345.000000
+BOUNDARY
+BACKGROUND
+sprites/backgrounds/livingroom.png
+true
